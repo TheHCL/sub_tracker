@@ -6,19 +6,36 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            NavigationStack {
+                SubscriptionListView()
+            }
+            .tabItem {
+                Label("Subscriptions", systemImage: "list.bullet.rectangle")
+            }
+            
+            NavigationStack {
+                StatisticsView()
+            }
+            .tabItem {
+                Label("Statistics", systemImage: "chart.pie")
+            }
+            
+            NavigationStack {
+                SettingsView()
+            }
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .modelContainer(for: Subscription.self, inMemory: true)
 }
