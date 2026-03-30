@@ -174,8 +174,9 @@ struct SettingsView: View {
     
     private func deleteAllSubscriptions() {
         notificationManager.cancelAllNotifications()
-        
-        for subscription in subscriptions {
+
+        let toDelete = Array(subscriptions)
+        for subscription in toDelete {
             modelContext.delete(subscription)
         }
     }

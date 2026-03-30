@@ -1,0 +1,1 @@
+open /Users/thehcl/Documents/xcode/sub_tracker/sub_tracker.xcworkspace

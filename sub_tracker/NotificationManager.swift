@@ -133,41 +133,66 @@ class NotificationManager: NSObject, ObservableObject {
     
     // MARK: - Icon attachment
 
-    /// Attaches a visible icon image to the notification content.
-    /// UIImage(named:"AppIcon") always returns nil for AppIcon asset sets,
-    /// so we probe bundle-generated icon files first, then draw a fallback.
+    /// Attaches the app icon to the notification content so the banner shows
+    /// the correct icon on both Simulator and real devices.
     private func applyIconAttachment(to content: UNMutableNotificationContent) {
-        let image = loadBundleIcon() ?? drawFallbackIcon()
+        let image = loadAppIcon() ?? drawFallbackIcon()
         guard let data = image.pngData() else { return }
 
-        let tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("notif_icon_\(UUID().uuidString).png")
+        // Use Caches directory — more stable than tmp on real devices.
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let iconURL = cacheDir.appendingPathComponent("notif_icon.png")
 
         do {
-            try data.write(to: tempURL)
-            content.attachments = [try UNNotificationAttachment(identifier: "icon", url: tempURL)]
-        } catch {}
+            try data.write(to: iconURL)
+            let options: [AnyHashable: Any] = [
+                UNNotificationAttachmentOptionsTypeHintKey: "public.png"
+            ]
+            content.attachments = [
+                try UNNotificationAttachment(identifier: "app_icon", url: iconURL, options: options)
+            ]
+        } catch {
+            print("Notification attachment error: \(error)")
+        }
     }
 
-    /// Tries several paths where Xcode places generated app icon PNGs in the bundle.
-    private func loadBundleIcon() -> UIImage? {
-        // Xcode generates loose PNG files alongside Assets.car using these names
+    /// Loads the app icon on both Simulator and real devices.
+    /// On Simulator, Xcode places loose PNGs alongside Assets.car;
+    /// on real devices we read from CFBundleIcons in the Info.plist.
+    private func loadAppIcon() -> UIImage? {
+        // Method 1: CFBundleIconName (modern Xcode with GENERATE_INFOPLIST_FILE, works on real devices)
+        if let iconName = Bundle.main.infoDictionary?["CFBundleIconName"] as? String,
+           let img = UIImage(named: iconName) { return img }
+
+        // Method 2: Direct asset catalog name
+        if let img = UIImage(named: "AppIcon") { return img }
+
+        // Method 3: CFBundleIcons / CFBundleIconFiles (older projects)
+        if let icons = Bundle.main.infoDictionary?["CFBundleIcons"] as? [String: Any],
+           let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+           let files = primary["CFBundleIconFiles"] as? [String] {
+            for name in files.reversed() {
+                if let img = UIImage(named: name) { return img }
+                if let url = Bundle.main.url(forResource: name, withExtension: "png"),
+                   let img = UIImage(contentsOfFile: url.path) { return img }
+            }
+        }
+
+        // Method 4: Xcode-generated loose PNG names (Simulator builds)
         let candidates = [
             "AppIcon60x60@3x", "AppIcon60x60@2x",
             "AppIcon40x40@3x", "AppIcon40x40@2x",
-            "AppIcon20x20@3x", "AppIcon20x20@2x",
         ]
         for name in candidates {
-            // Try asset catalog lookup (works on some Xcode configs)
             if let img = UIImage(named: name) { return img }
-            // Try loose file in bundle root
             if let url = Bundle.main.url(forResource: name, withExtension: "png"),
                let img = UIImage(contentsOfFile: url.path) { return img }
         }
+
         return nil
     }
 
-    /// Draws a branded fallback icon so the notification always shows something.
+    /// Draws a branded fallback icon in case the bundle icon cannot be loaded.
     private func drawFallbackIcon() -> UIImage {
         let size = CGSize(width: 200, height: 200)
         return UIGraphicsImageRenderer(size: size).image { _ in
