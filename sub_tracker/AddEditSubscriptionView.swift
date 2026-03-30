@@ -12,7 +12,8 @@ struct AddEditSubscriptionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @StateObject private var notificationManager = NotificationManager.shared
-    
+    @EnvironmentObject private var lm: LanguageManager
+
     let subscription: Subscription?
     
     @State private var name: String = ""
@@ -22,12 +23,12 @@ struct AddEditSubscriptionView: View {
     @State private var nextPaymentDate: Date = Date()
     @State private var category: SubscriptionCategory = .other
     @State private var icon: String = "app.fill"
-    @State private var notificationDaysBefore: Int = 7
+    @State private var notificationDaysBefore: [Int] = [7]
+    @State private var notificationsEnabled: Bool = true
     @State private var isActive: Bool = true
     @State private var notes: String = ""
-    
+
     let currencies = allCurrencies
-    let notificationOptions = [3, 5, 7, 14, 30]
     
     // Predefined subscription templates
     let subscriptionTemplates: [(name: String, icon: String, category: SubscriptionCategory)] = [
@@ -55,7 +56,7 @@ struct AddEditSubscriptionView: View {
         Form {
             // Quick Templates
             if subscription == nil {
-                Section("Popular Subscriptions") {
+                Section(lm.s("Popular Subscriptions", "熱門訂閱")) {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(subscriptionTemplates, id: \.name) { template in
@@ -78,10 +79,10 @@ struct AddEditSubscriptionView: View {
             }
             
             // Basic Information
-            Section("Basic Information") {
-                TextField("Name", text: $name)
+            Section(lm.s("Basic Information", "基本資訊")) {
+                TextField(lm.s("Name", "名稱"), text: $name)
 
-                Picker("Category", selection: $category) {
+                Picker(lm.s("Category", "類別"), selection: $category) {
                     ForEach(SubscriptionCategory.allCases, id: \.self) { cat in
                         Label(cat.rawValue, systemImage: cat.icon)
                             .tag(cat)
@@ -90,42 +91,42 @@ struct AddEditSubscriptionView: View {
             }
             
             // Pricing
-            Section("Pricing") {
+            Section(lm.s("Pricing", "費用")) {
                 HStack {
-                    Picker("Currency", selection: $currency) {
+                    Picker(lm.s("Currency", "貨幣"), selection: $currency) {
                         ForEach(currencies, id: \.self) { curr in
                             Text(curr).tag(curr)
                         }
                     }
                     .frame(width: 100)
                     
-                    TextField("Price", value: $price, format: .number)
+                    TextField(lm.s("Price", "金額"), value: $price, format: .number)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                 }
                 
-                Picker("Billing Cycle", selection: $billingCycle) {
+                Picker(lm.s("Billing Cycle", "計費週期"), selection: $billingCycle) {
                     ForEach(BillingCycle.allCases, id: \.self) { cycle in
                         Label(cycle.rawValue, systemImage: cycle.icon)
                             .tag(cycle)
                     }
                 }
                 
-                DatePicker("Next Payment", selection: $nextPaymentDate, displayedComponents: .date)
+                DatePicker(lm.s("Next Payment", "下次付款"), selection: $nextPaymentDate, displayedComponents: .date)
             }
             
             // Cost Summary
             Section {
                 HStack {
-                    Text("Monthly equivalent")
+                    Text(lm.s("Monthly equivalent", "每月費用"))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(currency) \(monthlyEquivalent, specifier: "%.2f")")
                         .fontWeight(.semibold)
                 }
-                
+
                 HStack {
-                    Text("Yearly equivalent")
+                    Text(lm.s("Yearly equivalent", "每年費用"))
                         .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(currency) \(yearlyEquivalent, specifier: "%.2f")")
@@ -134,36 +135,50 @@ struct AddEditSubscriptionView: View {
             }
             
             // Notifications
-            Section("Reminders") {
-                Picker("Notify me before", selection: $notificationDaysBefore) {
-                    ForEach(notificationOptions, id: \.self) { days in
-                        Text("\(days) days").tag(days)
-                    }
+            Section {
+                Toggle(isOn: $notificationsEnabled) {
+                    Label(lm.s("Enable Notifications", "啟用通知"), systemImage: notificationsEnabled ? "bell.fill" : "bell.slash.fill")
+                }
+
+                if notificationsEnabled {
+                    NotificationReminderRow(days: 30, label: lm.s("30 days before", "30 天前"), selection: $notificationDaysBefore)
+                    NotificationReminderRow(days: 7,  label: lm.s("7 days before",  "7 天前"),  selection: $notificationDaysBefore)
+                    NotificationReminderRow(days: 3,  label: lm.s("3 days before",  "3 天前"),  selection: $notificationDaysBefore)
+                    NotificationReminderRow(days: 0,  label: lm.s("On the day",     "當天"),    selection: $notificationDaysBefore)
+                }
+            } header: {
+                Text(lm.s("Reminders", "提醒"))
+            } footer: {
+                if notificationsEnabled {
+                    Text(lm.s(
+                        "Daily reminders will be sent every day from the selected start date until the payment date, at the time set in Settings.",
+                        "從所選起始天數到付款當天，每天都會在設定的時間點發出通知。"
+                    ))
                 }
             }
             
             // Status
             Section {
-                Toggle("Active Subscription", isOn: $isActive)
+                Toggle(lm.s("Active Subscription", "啟用訂閱"), isOn: $isActive)
             }
             
             // Notes
-            Section("Notes") {
+            Section(lm.s("Notes", "備註")) {
                 TextEditor(text: $notes)
                     .frame(minHeight: 100)
             }
         }
-        .navigationTitle(subscription == nil ? "Add Subscription" : "Edit Subscription")
+        .navigationTitle(subscription == nil ? lm.s("Add Subscription", "新增訂閱") : lm.s("Edit Subscription", "編輯訂閱"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
+                Button(lm.s("Cancel", "取消")) {
                     dismiss()
                 }
             }
             
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
+                Button(lm.s("Save", "儲存")) {
                     saveSubscription()
                 }
                 .disabled(name.isEmpty || price <= 0)
@@ -202,7 +217,8 @@ struct AddEditSubscriptionView: View {
         nextPaymentDate = subscription.nextPaymentDate
         category = subscription.category
         icon = subscription.icon
-        notificationDaysBefore = subscription.notificationDaysBefore
+        notificationDaysBefore = subscription.notificationDaysBefore.isEmpty ? [7] : subscription.notificationDaysBefore
+        notificationsEnabled = subscription.notificationsEnabled
         isActive = subscription.isActive
         notes = subscription.notes
     }
@@ -218,6 +234,7 @@ struct AddEditSubscriptionView: View {
             existingSubscription.category = category
             existingSubscription.icon = icon
             existingSubscription.notificationDaysBefore = notificationDaysBefore
+            existingSubscription.notificationsEnabled = notificationsEnabled
             existingSubscription.isActive = isActive
             existingSubscription.notes = notes
             
@@ -235,6 +252,7 @@ struct AddEditSubscriptionView: View {
                 category: category,
                 icon: icon,
                 notificationDaysBefore: notificationDaysBefore,
+                notificationsEnabled: notificationsEnabled,
                 isActive: isActive,
                 notes: notes
             )
@@ -272,6 +290,33 @@ struct TemplateButton: View {
     }
 }
 
+
+private struct NotificationReminderRow: View {
+    let days: Int
+    let label: String
+    @Binding var selection: [Int]
+
+    var body: some View {
+        let selected = selection.contains(days)
+        Button(action: {
+            if selected {
+                selection.removeAll { $0 == days }
+            } else {
+                selection.append(days)
+            }
+        }) {
+            HStack {
+                Text(label)
+                    .foregroundStyle(.primary)
+                Spacer()
+                if selected {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+    }
+}
 
 #Preview {
     NavigationStack {

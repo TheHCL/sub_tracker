@@ -16,7 +16,36 @@ class NotificationManager: NSObject, ObservableObject {
     static let shared = NotificationManager()
     
     @Published var isAuthorized = false
-    
+
+    /// Returns (hour, minute) from the user-set notification time.
+    /// Stored as seconds-since-midnight under "notificationTimeInterval"; defaults to 09:00.
+    private var notificationTime: (hour: Int, minute: Int) {
+        let interval = UserDefaults.standard.double(forKey: "notificationTimeInterval")
+        let total = interval > 0 ? Int(interval) : 9 * 3600
+        return (total / 3600, (total % 3600) / 60)
+    }
+
+    /// Generates all daily notification identifiers for the subscription's current window.
+    private func notificationIdentifiers(for subscription: Subscription) -> [String] {
+        guard let startDays = subscription.notificationDaysBefore.max() else { return [] }
+        let calendar = Calendar.current
+        let formatter = dateFormatter
+        let startDate = calendar.date(byAdding: .day, value: -startDays, to: subscription.nextPaymentDate) ?? subscription.nextPaymentDate
+        var identifiers: [String] = []
+        var current = startDate
+        while current <= subscription.nextPaymentDate {
+            identifiers.append("\(subscription.id.uuidString)-\(formatter.string(from: current))")
+            current = calendar.date(byAdding: .day, value: 1, to: current) ?? current.addingTimeInterval(86400)
+        }
+        return identifiers
+    }
+
+    private var dateFormatter: DateFormatter {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }
+
     private override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
@@ -37,49 +66,66 @@ class NotificationManager: NSObject, ObservableObject {
     }
     
     func scheduleNotification(for subscription: Subscription) async {
-        // Request auth first if not yet authorized; then re-check
-        if !isAuthorized {
-            await requestAuthorization()
-        }
+        if !isAuthorized { await requestAuthorization() }
         guard isAuthorized else { return }
 
-        // Remove existing notification for this subscription
         await cancelNotification(for: subscription)
 
-        // Calculate notification date (N days before payment)
-        let notificationDate = Calendar.current.date(
-            byAdding: .day,
-            value: -subscription.notificationDaysBefore,
-            to: subscription.nextPaymentDate
-        ) ?? subscription.nextPaymentDate
+        // If notifications are disabled for this subscription, stop here.
+        guard subscription.notificationsEnabled else { return }
+        guard let startDays = subscription.notificationDaysBefore.max() else { return }
 
-        // Only schedule if the notification date is in the future
-        guard notificationDate > Date() else { return }
-
+        let calendar = Calendar.current
+        let now = Date()
+        let (hour, minute) = notificationTime
         let dueDateStr = subscription.nextPaymentDate.formatted(date: .abbreviated, time: .omitted)
-        let content = UNMutableNotificationContent()
-        content.title = "Subscription Payment Due"
-        content.body = "\(subscription.name) — \(subscription.currency) \(String(format: "%.2f", subscription.price)) due on \(dueDateStr) (in \(subscription.notificationDaysBefore) day\(subscription.notificationDaysBefore == 1 ? "" : "s"))"
-        content.sound = .default
-        content.categoryIdentifier = "SUBSCRIPTION_REMINDER"
-        applyIconAttachment(to: content)
+        let formatter = dateFormatter
 
-        // Fire at 9:00 AM on the notification day (avoids random times)
-        var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: notificationDate)
-        dateComponents.hour = 9
-        dateComponents.minute = 0
+        // Determine the start of the daily reminder window
+        let windowStart = calendar.date(byAdding: .day, value: -startDays, to: subscription.nextPaymentDate) ?? subscription.nextPaymentDate
+        // Begin from today if the window already started
+        let effectiveStart = windowStart < calendar.startOfDay(for: now) ? calendar.startOfDay(for: now) : windowStart
 
-        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-        let request = UNNotificationRequest(
-            identifier: subscription.id.uuidString,
-            content: content,
-            trigger: trigger
-        )
+        // Stop if payment date has already passed
+        guard subscription.nextPaymentDate >= calendar.startOfDay(for: now) else { return }
 
-        do {
-            try await UNUserNotificationCenter.current().add(request)
-        } catch {
-            print("Failed to schedule notification: \(error)")
+        var current = effectiveStart
+        while current <= subscription.nextPaymentDate {
+            // Build the fire date for this day at the configured time
+            var components = calendar.dateComponents([.year, .month, .day], from: current)
+            components.hour = hour
+            components.minute = minute
+            let fireDate = calendar.date(from: components) ?? current
+
+            // Skip if this specific fire time has already passed
+            guard fireDate > now else {
+                current = calendar.date(byAdding: .day, value: 1, to: current) ?? current.addingTimeInterval(86400)
+                continue
+            }
+
+            let daysUntilPayment = calendar.dateComponents([.day], from: calendar.startOfDay(for: current), to: subscription.nextPaymentDate).day ?? 0
+
+            let content = UNMutableNotificationContent()
+            content.title = "Subscription Payment Due"
+            if daysUntilPayment == 0 {
+                content.body = "\(subscription.name) — \(subscription.currency) \(String(format: "%.2f", subscription.price)) due today (\(dueDateStr))"
+            } else {
+                content.body = "\(subscription.name) — \(subscription.currency) \(String(format: "%.2f", subscription.price)) due on \(dueDateStr) (in \(daysUntilPayment) day\(daysUntilPayment == 1 ? "" : "s"))"
+            }
+            content.sound = .default
+            content.categoryIdentifier = "SUBSCRIPTION_REMINDER"
+            applyIconAttachment(to: content)
+
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let identifier = "\(subscription.id.uuidString)-\(formatter.string(from: current))"
+            let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+            do {
+                try await UNUserNotificationCenter.current().add(request)
+            } catch {
+                print("Failed to schedule notification for \(subscription.name) (\(formatter.string(from: current))): \(error)")
+            }
+
+            current = calendar.date(byAdding: .day, value: 1, to: current) ?? current.addingTimeInterval(86400)
         }
     }
 
@@ -93,24 +139,30 @@ class NotificationManager: NSObject, ObservableObject {
         let calendar = Calendar.current
         let now = Date()
 
-        let upcoming = subscriptions.filter { sub in
-            guard sub.isActive else { return false }
-            let days = calendar.dateComponents([.day], from: now, to: sub.nextPaymentDate).day ?? Int.max
-            return days >= 0 && days <= sub.notificationDaysBefore
+        // Collect (subscription, daysUntilPayment) pairs where any reminder day matches
+        var matchedPairs: [(sub: Subscription, daysUntil: Int)] = []
+        for sub in subscriptions {
+            guard sub.isActive else { continue }
+            let daysUntil = calendar.dateComponents([.day], from: now, to: sub.nextPaymentDate).day ?? Int.max
+            guard daysUntil >= 0, sub.notificationDaysBefore.contains(where: { daysUntil <= $0 }) else { continue }
+            matchedPairs.append((sub, daysUntil))
         }
 
-        for (index, sub) in upcoming.enumerated() {
-            let days = calendar.dateComponents([.day], from: now, to: sub.nextPaymentDate).day ?? 0
-
+        for (index, pair) in matchedPairs.enumerated() {
+            let sub = pair.sub
+            let days = pair.daysUntil
             let dueDateStr = sub.nextPaymentDate.formatted(date: .abbreviated, time: .omitted)
             let content = UNMutableNotificationContent()
             content.title = "Subscription Payment Due"
-            content.body = "\(sub.name) — \(sub.currency) \(String(format: "%.2f", sub.price)) due on \(dueDateStr) (in \(days) day\(days == 1 ? "" : "s"))"
+            if days == 0 {
+                content.body = "\(sub.name) — \(sub.currency) \(String(format: "%.2f", sub.price)) due today (\(dueDateStr))"
+            } else {
+                content.body = "\(sub.name) — \(sub.currency) \(String(format: "%.2f", sub.price)) due on \(dueDateStr) (in \(days) day\(days == 1 ? "" : "s"))"
+            }
             content.sound = .default
             content.categoryIdentifier = "SUBSCRIPTION_REMINDER"
             applyIconAttachment(to: content)
 
-            // Stagger by 1 s so multiple notifications don't collapse
             let trigger = UNTimeIntervalNotificationTrigger(
                 timeInterval: Double(5 + index),
                 repeats: false
@@ -120,7 +172,6 @@ class NotificationManager: NSObject, ObservableObject {
                 content: content,
                 trigger: trigger
             )
-
             do {
                 try await UNUserNotificationCenter.current().add(request)
             } catch {
@@ -128,7 +179,7 @@ class NotificationManager: NSObject, ObservableObject {
             }
         }
 
-        return upcoming.count
+        return matchedPairs.count
     }
     
     // MARK: - Icon attachment
@@ -216,7 +267,7 @@ class NotificationManager: NSObject, ObservableObject {
 
     func cancelNotification(for subscription: Subscription) async {
         UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: [subscription.id.uuidString]
+            withIdentifiers: notificationIdentifiers(for: subscription)
         )
     }
     

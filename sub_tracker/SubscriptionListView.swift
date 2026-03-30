@@ -13,6 +13,7 @@ struct SubscriptionListView: View {
     @Query(sort: \Subscription.nextPaymentDate) private var subscriptions: [Subscription]
     @StateObject private var notificationManager = NotificationManager.shared
     @AppStorage("displayCurrency") private var displayCurrency = "USD"
+    @EnvironmentObject private var lm: LanguageManager
 
     @State private var showingAddSubscription = false
     @State private var selectedSubscription: Subscription?
@@ -36,7 +37,7 @@ struct SubscriptionListView: View {
                 VStack(spacing: 12) {
                     HStack {
                         VStack(alignment: .leading) {
-                            Text("Monthly Total")
+                            Text(lm.s("Monthly Total", "每月總計"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text(CurrencyConverter.format(totalMonthly, currency: displayCurrency))
@@ -47,7 +48,7 @@ struct SubscriptionListView: View {
                         Spacer()
 
                         VStack(alignment: .trailing) {
-                            Text("Yearly Total")
+                            Text(lm.s("Yearly Total", "每年總計"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Text(CurrencyConverter.format(totalYearly, currency: displayCurrency))
@@ -55,16 +56,16 @@ struct SubscriptionListView: View {
                                 .fontWeight(.bold)
                         }
                     }
-                    
+
                     HStack {
-                        Label("\(activeSubscriptions.count) Active", systemImage: "checkmark.circle.fill")
+                        Label(lm.s("\(activeSubscriptions.count) Active", "\(activeSubscriptions.count) 個啟用"), systemImage: "checkmark.circle.fill")
                             .font(.caption)
                             .foregroundStyle(.green)
-                        
+
                         Spacer()
-                        
+
                         if subscriptions.count > activeSubscriptions.count {
-                            Label("\(subscriptions.count - activeSubscriptions.count) Inactive", systemImage: "pause.circle.fill")
+                            Label(lm.s("\(subscriptions.count - activeSubscriptions.count) Inactive", "\(subscriptions.count - activeSubscriptions.count) 個停用"), systemImage: "pause.circle.fill")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -75,47 +76,47 @@ struct SubscriptionListView: View {
             
             // Active Subscriptions
             if !activeSubscriptions.isEmpty {
-                Section("Active Subscriptions") {
+                Section(lm.s("Active Subscriptions", "啟用中的訂閱")) {
                     ForEach(activeSubscriptions) { subscription in
                         SubscriptionRowView(subscription: subscription)
                             .onTapGesture {
                                 selectedSubscription = subscription
                             }
                     }
-                    .onDelete(perform: deleteSubscriptions)
+                    .onDelete { offsets in deleteSubscriptions(at: offsets, from: activeSubscriptions) }
                 }
             }
-            
+
             // Inactive Subscriptions
             let inactiveSubscriptions = subscriptions.filter { !$0.isActive }
             if !inactiveSubscriptions.isEmpty {
-                Section("Inactive Subscriptions") {
+                Section(lm.s("Inactive Subscriptions", "已停用的訂閱")) {
                     ForEach(inactiveSubscriptions) { subscription in
                         SubscriptionRowView(subscription: subscription)
                             .onTapGesture {
                                 selectedSubscription = subscription
                             }
                     }
-                    .onDelete(perform: deleteSubscriptions)
+                    .onDelete { offsets in deleteSubscriptions(at: offsets, from: inactiveSubscriptions) }
                 }
             }
             
             // Empty State
             if subscriptions.isEmpty {
                 ContentUnavailableView(
-                    "No Subscriptions",
+                    lm.s("No Subscriptions", "尚無訂閱"),
                     systemImage: "creditcard.and.123",
-                    description: Text("Add your first subscription to start tracking your expenses")
+                    description: Text(lm.s("Add your first subscription to start tracking your expenses", "新增第一筆訂閱，開始追蹤你的支出"))
                 )
             }
         }
-        .navigationTitle("Subscriptions")
+        .navigationTitle(lm.s("Subscriptions", "訂閱"))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingAddSubscription = true
                 } label: {
-                    Label("Add Subscription", systemImage: "plus")
+                    Label(lm.s("Add Subscription", "新增訂閱"), systemImage: "plus")
                 }
             }
         }
@@ -137,9 +138,9 @@ struct SubscriptionListView: View {
         }
     }
     
-    private func deleteSubscriptions(at offsets: IndexSet) {
+    private func deleteSubscriptions(at offsets: IndexSet, from source: [Subscription]) {
         for index in offsets {
-            let subscription = subscriptions[index]
+            let subscription = source[index]
             Task {
                 await notificationManager.cancelNotification(for: subscription)
             }
@@ -151,13 +152,14 @@ struct SubscriptionListView: View {
 struct SubscriptionRowView: View {
     let subscription: Subscription
     @AppStorage("displayCurrency") private var displayCurrency = "USD"
+    @EnvironmentObject private var lm: LanguageManager
 
     var daysUntilPayment: Int {
         Calendar.current.dateComponents([.day], from: Date(), to: subscription.nextPaymentDate).day ?? 0
     }
 
     var isPaymentSoon: Bool {
-        daysUntilPayment <= subscription.notificationDaysBefore && daysUntilPayment >= 0
+        daysUntilPayment >= 0 && subscription.notificationDaysBefore.contains(where: { daysUntilPayment <= $0 })
     }
 
     var urgencyColor: Color {
@@ -170,9 +172,9 @@ struct SubscriptionRowView: View {
 
     var daysLabel: String {
         switch daysUntilPayment {
-        case 0:  return "Today"
-        case 1:  return "Tomorrow"
-        default: return "in \(daysUntilPayment) days"
+        case 0:  return lm.s("Today", "今天")
+        case 1:  return lm.s("Tomorrow", "明天")
+        default: return lm.s("in \(daysUntilPayment) days", "\(daysUntilPayment) 天後")
         }
     }
 
@@ -198,7 +200,7 @@ struct SubscriptionRowView: View {
                     .font(.headline)
 
                 if !subscription.isActive {
-                    Text("Inactive")
+                    Text(lm.s("Inactive", "已停用"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
@@ -210,7 +212,11 @@ struct SubscriptionRowView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    if isPaymentSoon {
+                    if !subscription.notificationsEnabled {
+                        Label(lm.s("Muted", "已靜音"), systemImage: "bell.slash.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    } else if isPaymentSoon {
                         Label(daysLabel, systemImage: "bell.fill")
                             .font(.caption2)
                             .fontWeight(.semibold)

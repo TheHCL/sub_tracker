@@ -33,7 +33,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .day, value: 5, to: Date())!,
                     category: .music,
                     icon: "music.note",
-                    notificationDaysBefore: 7
+                    notificationDaysBefore: [7]
                 ),
                 Subscription(
                     name: "Netflix",
@@ -43,7 +43,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .day, value: 12, to: Date())!,
                     category: .streaming,
                     icon: "tv.fill",
-                    notificationDaysBefore: 7
+                    notificationDaysBefore: [7]
                 ),
                 Subscription(
                     name: "YouTube Premium",
@@ -53,7 +53,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .day, value: 20, to: Date())!,
                     category: .streaming,
                     icon: "play.rectangle.fill",
-                    notificationDaysBefore: 7
+                    notificationDaysBefore: [7]
                 ),
                 Subscription(
                     name: "Claude Pro",
@@ -63,7 +63,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .day, value: 8, to: Date())!,
                     category: .ai,
                     icon: "brain.head.profile",
-                    notificationDaysBefore: 3
+                    notificationDaysBefore: [3]
                 ),
                 Subscription(
                     name: "iCloud+",
@@ -73,7 +73,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .month, value: 3, to: Date())!,
                     category: .cloud,
                     icon: "cloud.fill",
-                    notificationDaysBefore: 14
+                    notificationDaysBefore: [14]
                 ),
                 Subscription(
                     name: "Adobe Creative Cloud",
@@ -83,7 +83,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .day, value: 15, to: Date())!,
                     category: .productivity,
                     icon: "paintbrush.fill",
-                    notificationDaysBefore: 7
+                    notificationDaysBefore: [7]
                 ),
                 Subscription(
                     name: "Spotify (Old)",
@@ -93,7 +93,7 @@ class PreviewData {
                     nextPaymentDate: Calendar.current.date(byAdding: .day, value: -30, to: Date())!,
                     category: .music,
                     icon: "music.quarternote.3",
-                    notificationDaysBefore: 7,
+                    notificationDaysBefore: [7],
                     isActive: false
                 )
             ]

@@ -9,27 +9,29 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @EnvironmentObject private var lm: LanguageManager
+
     var body: some View {
         TabView {
             NavigationStack {
                 SubscriptionListView()
             }
             .tabItem {
-                Label("Subscriptions", systemImage: "list.bullet.rectangle")
+                Label(lm.s("Subscriptions", "訂閱"), systemImage: "list.bullet.rectangle")
             }
-            
+
             NavigationStack {
                 StatisticsView()
             }
             .tabItem {
-                Label("Statistics", systemImage: "chart.pie")
+                Label(lm.s("Statistics", "統計"), systemImage: "chart.pie")
             }
-            
+
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
-                Label("Settings", systemImage: "gear")
+                Label(lm.s("Settings", "設定"), systemImage: "gear")
             }
         }
     }
