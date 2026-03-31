@@ -102,6 +102,17 @@ final class Subscription {
         )
     }
 
+    // Calculate the next payment date based on billing cycle
+    func nextPaymentDateAfterRenewal(from date: Date, cycle: BillingCycle) -> Date {
+        let calendar = Calendar.current
+        switch cycle {
+        case .monthly:    return calendar.date(byAdding: .month,  value: 1,  to: date) ?? date
+        case .quarterly:  return calendar.date(byAdding: .month,  value: 3,  to: date) ?? date
+        case .halfYearly: return calendar.date(byAdding: .month,  value: 6,  to: date) ?? date
+        case .yearly:     return calendar.date(byAdding: .year,   value: 1,  to: date) ?? date
+        }
+    }
+
     // Calculate monthly cost for analytics
     var monthlyEquivalent: Double {
         switch billingCycle {

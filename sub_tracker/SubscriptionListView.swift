@@ -17,6 +17,8 @@ struct SubscriptionListView: View {
 
     @State private var showingAddSubscription = false
     @State private var selectedSubscription: Subscription?
+    @State private var renewalSubscription: Subscription?
+    @State private var snoozedRenewalIDs: Set<UUID> = []
 
     var activeSubscriptions: [Subscription] {
         subscriptions.filter { $0.isActive }
@@ -130,18 +132,46 @@ struct SubscriptionListView: View {
                 AddEditSubscriptionView(subscription: subscription)
             }
         }
+        .sheet(item: $renewalSubscription, onDismiss: {
+            // After renewing or canceling, show next expired subscription if any
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                renewalSubscription = expiredActiveSubscriptions.first
+            }
+        }) { subscription in
+            RenewalPromptView(subscription: subscription) {
+                // Snooze: add to ignored set so it won't reappear this session
+                snoozedRenewalIDs.insert(subscription.id)
+            }
+        }
         .task {
             await notificationManager.checkAuthorizationStatus()
             if !notificationManager.isAuthorized {
                 await notificationManager.requestAuthorization()
             }
             WidgetDataWriter.write(subscriptions)
+            checkForExpiredSubscriptions()
         }
         .onChange(of: subscriptions) {
             WidgetDataWriter.write(subscriptions)
+            checkForExpiredSubscriptions()
         }
     }
     
+    // Subscriptions that are active, past due, and not snoozed this session
+    var expiredActiveSubscriptions: [Subscription] {
+        let today = Calendar.current.startOfDay(for: Date())
+        return activeSubscriptions.filter {
+            Calendar.current.startOfDay(for: $0.nextPaymentDate) <= today &&
+            !snoozedRenewalIDs.contains($0.id)
+        }
+    }
+
+    private func checkForExpiredSubscriptions() {
+        if renewalSubscription == nil {
+            renewalSubscription = expiredActiveSubscriptions.first
+        }
+    }
+
     private func deleteSubscriptions(at offsets: IndexSet, from source: [Subscription]) {
         for index in offsets {
             let subscription = source[index]

@@ -13,6 +13,14 @@ A comprehensive iOS app to track and manage your subscriptions with payment remi
 - Set subscriptions as active or inactive
 - Add notes to subscriptions
 
+### 🔄 Renewal Prompt
+- Automatically detects expired or due-today subscriptions on app launch and data changes
+- Prompts the user to renew or cancel each expired subscription one at a time
+- Allows changing the price, currency, and billing cycle at renewal time
+- Previews the next payment date before confirming
+- "Remind Me Later" snoozes the prompt for the current session without modifying the subscription
+- Canceling a subscription from the prompt marks it as inactive and removes its notifications
+
 ### 🔔 Smart Notifications
 - Customizable reminder notifications (3, 5, 7, 14, or 30 days before payment)
 - Automatic notification scheduling
@@ -83,11 +91,17 @@ A comprehensive iOS app to track and manage your subscriptions with payment remi
    - SwiftData configuration
    - Model container stored in App Group shared container for widget access
 
-9. **WidgetDataWriter.swift** - Widget data bridge
+9. **RenewalPromptView.swift** - Renewal decision sheet
+   - Shown automatically when a subscription is due or overdue
+   - Editable price, currency, and billing cycle for the new term
+   - Calculates and displays the next payment date preview
+   - Confirm renewal, cancel subscription, or snooze to later
+
+10. **WidgetDataWriter.swift** - Widget data bridge
    - Writes active subscriptions to shared App Group container as JSON
    - Triggers `WidgetCenter.reloadAllTimelines()` on every change
 
-10. **sub_tracker_widget/** - Widget extension
+11. **sub_tracker_widget/** - Widget extension
     - Small, Medium, and Large widget sizes
     - Reads shared JSON data written by `WidgetDataWriter`
 
@@ -198,6 +212,7 @@ Potential features for future versions:
 - iCloud sync
 - Multiple currency support in one view
 - Subscription price history tracking
+- Persistent snooze across app restarts (currently session-only)
 
 ---
 
