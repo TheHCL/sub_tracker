@@ -12,19 +12,27 @@ import SwiftData
 struct sub_trackerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Subscription.self])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        // Use App Group container so the widget extension can read the same store.
+        let groupURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: WidgetDataWriter.appGroupID
+        )
+        let storeURL = groupURL?.appendingPathComponent("sub_tracker.sqlite")
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            url: storeURL ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("sub_tracker.sqlite"),
+            cloudKitDatabase: .none
+        )
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            // Schema changed (e.g. Int → [Int]): delete the old store and start fresh.
-            let storeURL = modelConfiguration.url
-            if storeURL.isFileURL {
+            // Schema changed: delete the old store and start fresh.
+            let url = modelConfiguration.url
+            if url.isFileURL {
                 let fm = FileManager.default
-                let shmURL = storeURL.appendingPathExtension("sqlite-shm")
-                let walURL = storeURL.appendingPathExtension("sqlite-wal")
-                for url in [storeURL, shmURL, walURL] {
-                    try? fm.removeItem(at: url)
+                for ext in ["", ".sqlite-shm", ".sqlite-wal"] {
+                    try? fm.removeItem(at: url.appendingPathExtension(ext))
                 }
             }
             do {

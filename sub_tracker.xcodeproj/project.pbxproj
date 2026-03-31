@@ -6,9 +6,48 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AA1B000D000000000000000D /* sub_tracker_widget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA1B00010000000000000001 /* sub_tracker_widget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA1B000B000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 56CA9CBC2F78FD960030D5CC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA1B00060000000000000006;
+			remoteInfo = sub_tracker_widget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA1B000C000000000000000C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA1B000D000000000000000D /* sub_tracker_widget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		56CA9CC42F78FD960030D5CC /* sub_tracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sub_tracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA1B00010000000000000001 /* sub_tracker_widget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = sub_tracker_widget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		AA1B000E000000000000000E /* Exceptions for "sub_tracker_widget" folder in "sub_tracker_widget" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AA1B00060000000000000006 /* sub_tracker_widget */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		56CA9CC62F78FD960030D5CC /* sub_tracker */ = {
@@ -16,10 +55,25 @@
 			path = sub_tracker;
 			sourceTree = "<group>";
 		};
+		AA1B00020000000000000002 /* sub_tracker_widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AA1B000E000000000000000E /* Exceptions for "sub_tracker_widget" folder in "sub_tracker_widget" target */,
+			);
+			path = sub_tracker_widget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		56CA9CC12F78FD960030D5CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA1B00040000000000000004 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				56CA9CC62F78FD960030D5CC /* sub_tracker */,
+				AA1B00020000000000000002 /* sub_tracker_widget */,
 				56CA9CC52F78FD960030D5CC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +96,7 @@
 			isa = PBXGroup;
 			children = (
 				56CA9CC42F78FD960030D5CC /* sub_tracker.app */,
+				AA1B00010000000000000001 /* sub_tracker_widget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,10 +111,12 @@
 				56CA9CC02F78FD960030D5CC /* Sources */,
 				56CA9CC12F78FD960030D5CC /* Frameworks */,
 				56CA9CC22F78FD960030D5CC /* Resources */,
+				AA1B000C000000000000000C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA1B000A000000000000000A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				56CA9CC62F78FD960030D5CC /* sub_tracker */,
@@ -69,6 +127,28 @@
 			productName = sub_tracker;
 			productReference = 56CA9CC42F78FD960030D5CC /* sub_tracker.app */;
 			productType = "com.apple.product-type.application";
+		};
+		AA1B00060000000000000006 /* sub_tracker_widget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA1B00090000000000000009 /* Build configuration list for PBXNativeTarget "sub_tracker_widget" */;
+			buildPhases = (
+				AA1B00030000000000000003 /* Sources */,
+				AA1B00040000000000000004 /* Frameworks */,
+				AA1B00050000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA1B00020000000000000002 /* sub_tracker_widget */,
+			);
+			name = sub_tracker_widget;
+			packageProductDependencies = (
+			);
+			productName = sub_tracker_widget;
+			productReference = AA1B00010000000000000001 /* sub_tracker_widget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +161,9 @@
 				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					56CA9CC32F78FD960030D5CC = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					AA1B00060000000000000006 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -100,12 +183,20 @@
 			projectRoot = "";
 			targets = (
 				56CA9CC32F78FD960030D5CC /* sub_tracker */,
+				AA1B00060000000000000006 /* sub_tracker_widget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		56CA9CC22F78FD960030D5CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA1B00050000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +213,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA1B00030000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA1B000A000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA1B00060000000000000006 /* sub_tracker_widget */;
+			targetProxy = AA1B000B000000000000000B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		56CA9CCD2F78FD970030D5CC /* Debug */ = {
@@ -246,6 +352,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = sub_tracker/sub_tracker.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -291,6 +398,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = sub_tracker/sub_tracker.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = C6723ZAP68;
@@ -330,6 +438,68 @@
 			};
 			name = Release;
 		};
+		AA1B00070000000000000007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = sub_tracker_widget/sub_tracker_widget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C6723ZAP68;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = sub_tracker_widget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thehcl.sub-tracker.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA1B00080000000000000008 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = sub_tracker_widget/sub_tracker_widget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = C6723ZAP68;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = sub_tracker_widget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thehcl.sub-tracker.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -347,6 +517,15 @@
 			buildConfigurations = (
 				56CA9CD02F78FD970030D5CC /* Debug */,
 				56CA9CD12F78FD970030D5CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA1B00090000000000000009 /* Build configuration list for PBXNativeTarget "sub_tracker_widget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA1B00070000000000000007 /* Debug */,
+				AA1B00080000000000000008 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

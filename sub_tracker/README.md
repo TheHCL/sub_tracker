@@ -19,6 +19,12 @@ A comprehensive iOS app to track and manage your subscriptions with payment remi
 - Visual indicators for upcoming payments
 - Notification management in Settings
 
+### 🖼 Home Screen Widget
+- iOS widget support (Small, Medium, Large sizes)
+- Shows upcoming payments sorted by due date
+- Auto-refreshes when subscription data changes
+- Powered by App Group shared storage for real-time data sharing between app and widget
+
 ### 📊 Analytics & Insights
 - Interactive pie chart showing spending by category
 - Monthly and yearly spending views
@@ -75,7 +81,15 @@ A comprehensive iOS app to track and manage your subscriptions with payment remi
 
 8. **sub_trackerApp.swift** - App entry point
    - SwiftData configuration
-   - Model container setup
+   - Model container stored in App Group shared container for widget access
+
+9. **WidgetDataWriter.swift** - Widget data bridge
+   - Writes active subscriptions to shared App Group container as JSON
+   - Triggers `WidgetCenter.reloadAllTimelines()` on every change
+
+10. **sub_tracker_widget/** - Widget extension
+    - Small, Medium, and Large widget sizes
+    - Reads shared JSON data written by `WidgetDataWriter`
 
 ## Setup Instructions
 
@@ -181,7 +195,6 @@ Potential features for future versions:
 - Budget warnings
 - Subscription sharing tracking
 - Annual cost savings calculator
-- Widget support
 - iCloud sync
 - Multiple currency support in one view
 - Subscription price history tracking

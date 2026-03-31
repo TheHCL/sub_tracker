@@ -135,6 +135,10 @@ struct SubscriptionListView: View {
             if !notificationManager.isAuthorized {
                 await notificationManager.requestAuthorization()
             }
+            WidgetDataWriter.write(subscriptions)
+        }
+        .onChange(of: subscriptions) {
+            WidgetDataWriter.write(subscriptions)
         }
     }
     
